@@ -62,6 +62,10 @@ RegisterCommand('buy', function(source, args)
     TriggerServerEvent("store-robbery:server:buyItem", item)
 end, false)
 
+RegisterCommand('startRobbery', function()
+    TriggerServerEvent("store-robbery:server:robberyStarted")
+end, false)
+
 RegisterNetEvent("store-robbery:client:balance")
 AddEventHandler("store-robbery:client:balance", function(balance)
     print("my balance:", balance)

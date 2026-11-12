@@ -1,4 +1,5 @@
 local playerMoney = {}
+local lastRobbery = {}
 
 local function addMoney(src, amount)
     if type(amount) ~= "number" or amount <= 0 then
@@ -28,7 +29,15 @@ end
 RegisterNetEvent("store-robbery:server:robberyStarted")
 AddEventHandler("store-robbery:server:robberyStarted", function()
     local src = source
+    local now = GetGameTimer()
+
+    if lastRobbery[src] and now - lastRobbery[src] < Config.robberyCooldown then
+        print("robbery refused, still on cooldown", src)
+        return
+    end
+
     addMoney(src, Config.robberyPayout)
+    lastRobbery[src] = now
     print("new balance", src, getBalance(src))
 end)
 
