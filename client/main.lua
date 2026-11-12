@@ -51,3 +51,32 @@ RegisterCommand('spawncasheer', function()
 
     StartRobberyWatch()
 end, false)
+
+RegisterCommand('balance', function()
+    TriggerServerEvent("store-robbery:server:getBalance")
+end, false)
+
+RegisterCommand('buy', function(source, args)
+    local item = args[1]
+    print("trying to buy", item)
+    TriggerServerEvent("store-robbery:server:buyItem", item)
+end, false)
+
+RegisterNetEvent("store-robbery:client:balance")
+AddEventHandler("store-robbery:client:balance", function(balance)
+    print("my balance:", balance)
+end)
+
+RegisterNetEvent("store-robbery:client:unknownItem")
+AddEventHandler("store-robbery:client:unknownItem", function(item)
+    print("unknown item:", item)
+end)
+
+RegisterNetEvent("store-robbery:client:buyResult")
+AddEventHandler("store-robbery:client:buyResult", function(ok, item, balance)
+    if ok then
+        print("bought", item, "balance now:", balance)
+    else
+        print("cant buy", item, "balance still:", balance)
+    end
+end)

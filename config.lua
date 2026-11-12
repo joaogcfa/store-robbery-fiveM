@@ -9,5 +9,9 @@ store_data = {
 Config = {
     robberyPayout = 500, -- money given to the player per robbery
     handsUpDuration = 8000, -- ms the clerk keeps hands up / register is "open"
-    robberyCooldown = 60000 -- ms before the same clerk can be robbed again
+    robberyCooldown = 60000, -- ms before the same clerk can be robbed again
+    items = {
+        water = 200,
+        burger = 400
+    }
 }
