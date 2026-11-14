@@ -38,6 +38,7 @@ AddEventHandler("store-robbery:server:robberyStarted", function()
 
     addMoney(src, Config.robberyPayout)
     lastRobbery[src] = now
+    TriggerClientEvent("store-robbery:client:balance", src, getBalance(src))
     print("new balance", src, getBalance(src))
 end)
 
