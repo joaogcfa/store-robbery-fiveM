@@ -172,3 +172,12 @@ CreateThread(function()
         end
     end
 end)
+
+RegisterCommand('coords', function()
+    local ped = PlayerPedId()
+    local coords = GetEntityCoords(ped)
+    local heading = GetEntityHeading(ped)
+
+    print(("x = %.4f, y = %.4f, z = %.4f, r = %.4f")
+        :format(coords.x, coords.y, coords.z, heading))
+end, false)
