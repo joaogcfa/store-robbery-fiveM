@@ -32,6 +32,7 @@ local function DoRobbery()
 
     Wait(Config.handsUpDuration)
     ClearPedTasks(casheer)
+    TriggerEvent("store-robbery:client:robberyFinished")
 
     Wait(Config.robberyCooldown)
     isRobberyStarted = false

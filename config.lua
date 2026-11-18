@@ -31,3 +31,8 @@ Config = {
         burger = 400
     }
 }
+
+--Car Breakdown (Veer)
+Config.breakdown = {
+    debug = true,   
+}
