@@ -55,6 +55,11 @@ local function StartRobberyWatch()
 end
 
 RegisterCommand('spawncasheer', function()
+    if casheer and DoesEntityExist(casheer) then
+        print("deleting old casheer")
+        DeleteEntity(casheer)
+    end
+
     local modelHash = GetHashKey(store_data.model)
     RequestModel(modelHash)
     while not HasModelLoaded(modelHash) do
