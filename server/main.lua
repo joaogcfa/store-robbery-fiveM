@@ -27,17 +27,25 @@ local function takeMoney(src, amount)
 end
 
 RegisterNetEvent("store-robbery:server:robberyStarted")
-AddEventHandler("store-robbery:server:robberyStarted", function()
+AddEventHandler("store-robbery:server:robberyStarted", function(storeId)
     local src = source
     local now = GetGameTimer()
+    print("robbery event from", src, "store", storeId)
 
-    if lastRobbery[src] and now - lastRobbery[src] < Config.robberyCooldown then
-        print("robbery refused, still on cooldown", src)
+    if Config.stores[storeId] == nil then
+        print("robbery refused, bad store id", src, storeId)
+        return
+    end
+
+    local key = src .. "_" .. storeId
+
+    if lastRobbery[key] and now - lastRobbery[key] < Config.robberyCooldown then
+        print("robbery refused, still on cooldown", key)
         return
     end
 
     addMoney(src, Config.robberyPayout)
-    lastRobbery[src] = now
+    lastRobbery[key] = now
     TriggerClientEvent("store-robbery:client:balance", src, getBalance(src))
     print("new balance", src, getBalance(src))
 end)
