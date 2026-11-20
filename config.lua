@@ -59,5 +59,15 @@ Config.breakdown = {
 
     -- Restart key after a stall (73 = X). The name is used to show the key icon in the help box.
     restartControl = 73,
-    restartControlName = 'INPUT_VEH_DUCK',
+    restartControlName = 'INPUT_VEH_DUCK',    
+
+    repairDistance = 1.8,                    -- how close to the bonnet the player must stand (metres)
+    skillHits = 3,                           -- hits needed to fix the engine
+    skillZoneSizes = { 0.22, 0.15, 0.09 },   -- green zone width for hit 1, 2, 3 (fraction of the bar)
+    skillSpeed = 1.1,                        -- marker speed (bar widths per second)
+    skillSpeedUp = 0.25,                     -- marker gets this much faster after each hit
+    failCooldown = 3.0,                      -- seconds before trying again after a miss
+
+    -- After the repair
+    wantedLevel = 5,     
 }
