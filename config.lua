@@ -69,5 +69,8 @@ Config.breakdown = {
     failCooldown = 3.0,                      -- seconds before trying again after a miss
 
     -- After the repair
-    wantedLevel = 5,     
+    wantedLevel = 5,  
+    
+    ditchDistance = 50.0,       -- walk further than this from the getaway car and you lose the cash
+    ditchWarnDistance = 30.0,
 }

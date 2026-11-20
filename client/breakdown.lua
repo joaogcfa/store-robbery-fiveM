@@ -9,10 +9,10 @@
 
 local BD = Config.breakdown   
 
+
 math.randomseed(GetGameTimer())
 
-local MPH_TO_MS = 0.44704     
-
+local MPH_TO_MS = 0.44704     -- 1 mph in metres per second
 
 
 local state = 'idle'
@@ -25,8 +25,8 @@ local stalled = false     -- limp mode: is the engine currently cut out?
 local stallTimer = 0.0    -- limp mode: seconds of driving left until the next stall
 local restartHeld = 0.0   -- limp mode: how long the player has held the restart key while stalled
 local smokeFx = nil       -- handle of the extra smoke particle effect on the engine
-local repairCooldownUntil = 0   
-
+local repairCooldownUntil = 0   -- game time (ms) before which a new repair can't start (after a miss)
+local ditchWarned = false       -- already warned the player they're walking too far from the car?
 
 
 local function debugPrint(msg)
@@ -66,7 +66,8 @@ local function isLandVehicle(veh)
         or IsThisModelABoat(model) or IsThisModelABicycle(model))
 end
 
-
+-- Extra, thicker smoke pouring out of the engine (on top of GTA's own damage smoke).
+-- Note: particle effects are only drawn for this player; other players still see GTA's normal smoke.
 local function startSmoke(veh)
     if smokeFx then return end
 
@@ -111,8 +112,8 @@ local function resetBreakdown(reason)
     state = 'idle'
     getaway = nil
     stalled = false
+    ditchWarned = false
 end
-
 
 local function checkForGetawayCar()
     local ped = PlayerPedId()
@@ -141,7 +142,7 @@ end
 
 
 
-local startBreakdown   -- defined below, declared here so trackDistance can call it
+local startBreakdown   
 
 local function trackDistance()
     local pos = GetEntityCoords(getaway)
@@ -156,7 +157,6 @@ local function trackDistance()
         startBreakdown()
     end
 end
-
 
 
 local function enterLimpMode(veh)
@@ -313,7 +313,7 @@ local function runSkillCheck(veh)
     -- Face the car, pop the bonnet, start the repair animation, stop the player walking off
     TaskTurnPedToFaceEntity(ped, veh, 1000)
     Wait(800)
-    SetVehicleDoorOpen(veh, BONNET_DOOR, false, true)
+    SetVehicleDoorOpen(veh, BONNET_DOOR, false, true)   -- last true = open instantly, all the way
     playRepairAnim(ped)
     FreezeEntityPosition(ped, true)
 
@@ -342,7 +342,9 @@ local function runSkillCheck(veh)
         -- Use E and Backspace only for the skill check while it's on screen
         DisableControlAction(0, CONTROL_E, true)
         DisableControlAction(0, CONTROL_CANCEL, true)
-         if GetVehicleDoorAngleRatio(veh, BONNET_DOOR) < 0.95 then
+
+        -- Keep the bonnet fully open (GTA can let it drift back down)
+        if GetVehicleDoorAngleRatio(veh, BONNET_DOOR) < 0.95 then
             SetVehicleDoorOpen(veh, BONNET_DOOR, false, true)
         end
         drawSkillBar(marker, zone, size, hits)
@@ -389,7 +391,6 @@ local function runSkillCheck(veh)
 end
 
 
-
 local function updateLimp()
     local veh = getaway
 
@@ -401,7 +402,7 @@ local function updateLimp()
         SetVehicleEngineHealth(veh, 50.0)
     end
 
-    
+   
     SetEntityMaxSpeed(veh, BD.limpSpeedMph * MPH_TO_MS)
     SetVehicleCheatPowerIncrease(veh, BD.limpPowerMultiplier)
 
@@ -461,6 +462,54 @@ local function updateLimp()
 end
 
 
+
+local RULE_STATES = { driving = true, breaking = true, limp = true, repairing = true, escaping = true }
+
+local function ditch(reason)
+    debugPrint('Ditched the getaway car: ' .. reason)
+    -- The server takes the robbery cash back and sends the new balance (the HUD shows -$500)
+    TriggerServerEvent('store-robbery:server:loseRobberyCash')
+    notify('~r~You ditched the getaway car!~s~ The cash is gone.')
+    resetBreakdown('ditched (' .. reason .. ')')
+end
+
+-- Returns true if the player broke the rule (and has been punished)
+local function checkDitching()
+    local ped = PlayerPedId()
+    local veh = GetVehiclePedIsIn(ped, false)   -- 0 when on foot
+
+    -- Sitting in any other vehicle (driver or passenger) counts as switching cars
+    if veh ~= 0 and veh ~= getaway then
+        ditch('got into another vehicle')
+        return true
+    end
+
+    -- On foot: how far from the getaway car?
+    if veh == 0 then
+        local dist = #(GetEntityCoords(ped) - GetEntityCoords(getaway))
+
+        if dist > BD.ditchDistance then
+            ditch(('walked %.0f m away'):format(dist))
+            return true
+        end
+
+        -- Warn once when they start wandering off; reset when they come back
+        if dist > BD.ditchWarnDistance then
+            if not ditchWarned then
+                ditchWarned = true
+                notify(('~o~Don\'t leave the getaway car!~s~ Go more than %.0f m and you lose the cash.')
+                    :format(BD.ditchDistance))
+            end
+        else
+            ditchWarned = false
+        end
+    end
+
+    return false
+end
+
+
+
 CreateThread(function()
     while true do
         local sleep = 500
@@ -472,6 +521,11 @@ CreateThread(function()
             elseif IsEntityDead(PlayerPedId()) then
                 resetBreakdown('player died')
             end
+        end
+
+        -- The no-switching rule runs before everything else; if it fires, state is back to idle
+        if RULE_STATES[state] and getaway then
+            checkDitching()
         end
 
         if state == 'armed' then
@@ -506,7 +560,6 @@ AddEventHandler('store-robbery:client:robberyFinished', function()
     debugPrint('Robbery finished: armed, waiting for a getaway car')
     notify('~r~Robbery complete!~s~ Get to a car and get out of here.')
 end)
-
 
 -- bd_test: pretend a robbery just finished
 RegisterCommand('bd_test', function()
@@ -554,7 +607,8 @@ RegisterCommand('bd_state', function()
     if getaway and DoesEntityExist(getaway) then
         info = info .. (' | speed %.0f mph | engine %.0f')
             :format(GetEntitySpeed(getaway) / MPH_TO_MS, GetVehicleEngineHealth(getaway))
-            info = info .. (' | bonnet %.1f m'):format(#(GetEntityCoords(PlayerPedId()) - getBonnetPos(getaway)))
+        info = info .. (' | bonnet %.1f m'):format(#(GetEntityCoords(PlayerPedId()) - getBonnetPos(getaway)))
+        info = info .. (' | car %.0f m away'):format(#(GetEntityCoords(PlayerPedId()) - GetEntityCoords(getaway)))
     end
     print('[breakdown] ' .. info)
 end, false)
