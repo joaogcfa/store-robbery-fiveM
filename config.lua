@@ -34,5 +34,30 @@ Config = {
 
 --Car Breakdown (Veer)
 Config.breakdown = {
-    debug = true,   
+    debug = true,               
+
+    -- Trigger
+    chance = 65,                
+    breakDistanceMin = 150.0,   
+    breakDistanceMax = 400.0,
+
+    -- Breakdown
+    sputterCount = 4,           
+
+    -- Limp mode
+    limpSpeedMph = 25.0,        
+    limpEngineHealth = 120.0,   
+    stallIntervalMin = 20,      
+    stallIntervalMax = 30,
+    restartHoldTime = 2.0,      
+     limpPowerMultiplier = 0.5,  -- engine power while limping (1.0 = normal, 0.5 = half): slow to accelerate
+
+    -- Extra engine smoke
+    smokeAsset = 'core',
+    smokeEffect = 'ent_amb_smoke_general',
+    smokeScale = 1.5,           -- bigger = more smoke
+
+    -- Restart key after a stall (73 = X). The name is used to show the key icon in the help box.
+    restartControl = 73,
+    restartControlName = 'INPUT_VEH_DUCK',
 }
