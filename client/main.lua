@@ -46,13 +46,14 @@ local function StartRobberyWatch()
         while true do
             Wait(500)
             for i = 1, #Config.stores do
-                if not isRobberyStarted[i] and DoesEntityExist(casheer[i]) then
+                local id = Config.stores[i].id
+                if not isRobberyStarted[id] and DoesEntityExist(casheer[id]) then
                     if IsPedArmed(PlayerPedId() --[[ Ped ]] , 4 --[[ integer ]] ) and
-                        IsPlayerFreeAimingAtEntity(PlayerId() --[[ Player ]] , casheer[i] --[[ Entity ]] ) then
-                        print("aiming at casheer", i)
-                        isRobberyStarted[i] = true
+                        IsPlayerFreeAimingAtEntity(PlayerId() --[[ Player ]] , casheer[id] --[[ Entity ]] ) then
+                        print("aiming at casheer", id)
+                        isRobberyStarted[id] = true
                         CreateThread(function()
-                            DoRobbery(i)
+                            DoRobbery(id)
                         end)
                     end
                 end
@@ -68,9 +69,16 @@ local function spawnCasheer(store)
     end
 
     local modelHash = GetHashKey(store.model)
+    RequestModel(modelHash)
+    while not HasModelLoaded(modelHash) do
+        Wait(0)
+    end
+    print("model loaded", store.id, store.model)
+
     local ped = CreatePed(1, modelHash --[[ Hash ]] , store.x --[[ number ]] , store.y --[[ number ]] ,
         store.z --[[ number ]] , store.r --[[ number ]] , false --[[ boolean ]] , false --[[ boolean ]] )
 
+    SetModelAsNoLongerNeeded(modelHash)
     SetEntityInvincible(ped --[[ Entity ]] , true --[[ boolean ]] )
     SetBlockingOfNonTemporaryEvents(ped --[[ Ped ]] , true --[[ boolean ]] )
     SetEntityAsMissionEntity(ped --[[ Entity ]] , true --[[ boolean ]] , true --[[ boolean ]] )
@@ -80,18 +88,10 @@ local function spawnCasheer(store)
 end
 
 local function spawnAllCasheers()
-    local modelHash = GetHashKey(Config.stores[1].model)
-    RequestModel(modelHash)
-    while not HasModelLoaded(modelHash) do
-        Wait(0)
-    end
-    print("model loaded")
-
     for i = 1, #Config.stores do
         casheer[Config.stores[i].id] = spawnCasheer(Config.stores[i])
     end
 
-    SetModelAsNoLongerNeeded(modelHash)
     StartRobberyWatch()
 end
 
