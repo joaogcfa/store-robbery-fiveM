@@ -63,7 +63,6 @@ local function SetSafeCombination()
     end
     currentLockNum = 1
     onTarget = false
-    print("combination (remove this print later)", safeCombination[1], safeCombination[2], safeCombination[3])
 end
 
 local function RelockSafe()
@@ -216,7 +215,7 @@ local function RunMiniGame()
 
         if IsDisabledControlJustPressed(0, 74) then
             local number = GetCurrentSafeDialNumber(safeDialRotation)
-            print("H pressed (74), number", number, "target", safeCombination[currentLockNum])
+            print("H pressed (74), number", number)
 
             if number == safeCombination[currentLockNum] then
                 ReleaseCurrentPin()
@@ -264,10 +263,6 @@ local function CrackSafe(storeId)
     isCracking = false
     return result
 end
-
-RegisterCommand('crack', function()
-    CrackSafe(0)
-end, false)
 
 AddEventHandler("onResourceStop", function(resourceName)
     if resourceName == GetCurrentResourceName() and isCracking then
