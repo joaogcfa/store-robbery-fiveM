@@ -23,11 +23,32 @@ market_data = {
 }
 
 Config = {
-    robberyPayout = 500, -- money given to the player per robbery
-    handsUpDuration = 8000, -- ms the clerk keeps hands up / register is "open"
-    robberyCooldown = 60000, -- ms before the same clerk can be robbed again
+    robberyPayout = 500,
+    handsUpDuration = 8000,
+    robberyCooldown = 60000,
     items = {
         water = 200,
         burger = 400
+    }
+}
+
+Config.weaponShop = {
+    position = vector3(110.0450, -1949.8994, 20.6405),
+    weapons = {
+        ["Pistol"] = {
+            weapon = "WEAPON_PISTOL",
+            price = 500,
+            ammo = 72
+        },
+        ["Micro SMG"] = {
+            weapon = "WEAPON_MICROSMG",
+            price = 1000,
+            ammo = 180
+        },
+        ["Pump Shotgun"] = {
+            weapon = "WEAPON_PUMPSHOTGUN",
+            price = 1500,
+            ammo = 48
+        }
     }
 }
