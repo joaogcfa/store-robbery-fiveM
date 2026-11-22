@@ -1,5 +1,7 @@
 local playerMoney = {}
 local lastRobbery = {}
+local cashMachineRobbed = {}
+local safeOpened = {}
 
 local function addMoney(src, amount)
     if type(amount) ~= "number" or amount <= 0 then
@@ -64,8 +66,50 @@ AddEventHandler("store-robbery:server:robberyStarted", function(storeId)
 
     addMoney(src, Config.robberyPayout)
     lastRobbery[key] = now
+    cashMachineRobbed[key] = true
     TriggerClientEvent("store-robbery:client:balance", src, getBalance(src))
     print("new balance", src, getBalance(src))
+end)
+
+RegisterNetEvent("store-robbery:server:safeCracked")
+AddEventHandler("store-robbery:server:safeCracked", function(storeId)
+    local src = source
+    print("safe cracked event from", src, "store", storeId)
+
+    local store = findStore(storeId)
+    if store == nil or store.safe == nil then
+        print("safe refused, bad store id or no safe", src, storeId)
+        TriggerClientEvent("store-robbery:client:safeResult", src, false, storeId, "bad store")
+        return
+    end
+
+    local playerCoords = GetEntityCoords(GetPlayerPed(src))
+    local distance = #(playerCoords - vector3(store.safe.x, store.safe.y, store.safe.z))
+    print("distance to safe", distance)
+    if distance > 3.0 then
+        print("safe refused, too far from safe", src, storeId)
+        TriggerClientEvent("store-robbery:client:safeResult", src, false, storeId, "too far")
+        return
+    end
+
+    local key = src .. "_" .. storeId
+    if not cashMachineRobbed[key] then
+        print("safe refused, cash machine not robbed", key)
+        TriggerClientEvent("store-robbery:client:safeResult", src, false, storeId, "rob the cash machine first")
+        return
+    end
+
+    if safeOpened[key] then
+        print("safe refused, already opened by this player", key)
+        TriggerClientEvent("store-robbery:client:safeResult", src, false, storeId, "already open")
+        return
+    end
+
+    addMoney(src, Config.safePayout)
+    safeOpened[key] = true
+    print("safe paid", src, storeId, "new balance", getBalance(src))
+    TriggerClientEvent("store-robbery:client:balance", src, getBalance(src))
+    TriggerClientEvent("store-robbery:client:safeResult", src, true, storeId, "safe opened")
 end)
 
 RegisterNetEvent("store-robbery:server:getBalance")

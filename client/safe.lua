@@ -154,6 +154,21 @@ local function DrawSprites()
     DrawSprite("MPSafeCracking", "Dial_BG", spriteX, spriteY, 0.3, aspectRatio * 0.3, 0.0, 255, 255, 255, 255)
     DrawSprite("MPSafeCracking", "Dial", spriteX, spriteY, 0.3 * 0.5, aspectRatio * 0.3 * 0.5, safeDialRotation,
         255, 255, 255, 255)
+
+    for i = 1, #safeCombination do
+        local lockTexture = "lock_closed"
+        if i < currentLockNum then
+            lockTexture = "lock_open"
+        end
+        DrawSprite("MPSafeCracking", lockTexture, 0.31, 0.22 + (i - 1) * 0.08, 0.02, aspectRatio * 0.02, 0.0,
+            255, 255, 255, 255)
+    end
+end
+
+local function ShowHelp(text)
+    BeginTextCommandDisplayHelp("STRING")
+    AddTextComponentSubstringPlayerName(text)
+    EndTextCommandDisplayHelp(0, false, true, -1)
 end
 
 local function EndMiniGame(safeUnlocked)
@@ -176,6 +191,10 @@ local function RunMiniGame()
         state = "cracking"
     elseif state == "cracking" then
         DisableSafeControls()
+        BeginTextCommandDisplayHelp("TWOSTRINGS")
+        AddTextComponentSubstringPlayerName("~INPUT_PICKUP~ Turn left~n~~INPUT_ENTER~ Turn right")
+        AddTextComponentSubstringPlayerName("~n~~INPUT_VEH_HEADLIGHT~ Confirm number~n~~INPUT_MOVE_DOWN_ONLY~ Give up")
+        EndTextCommandDisplayHelp(0, false, true, -1)
 
         local currentHealth = GetEntityHealth(PlayerPedId())
         if currentHealth > initPlayerHealth then
@@ -238,8 +257,8 @@ local function CrackSafe(storeId)
     print("minigame result", result)
 
     if result == 1 then
-        safeOpened[storeId] = true
-        print("safe opened storeId", storeId)
+        print("safe cracked, asking server to pay, storeId", storeId)
+        TriggerServerEvent("store-robbery:server:safeCracked", storeId)
     end
 
     isCracking = false
@@ -257,11 +276,22 @@ AddEventHandler("onResourceStop", function(resourceName)
     end
 end)
 
-local function ShowHelp(text)
-    BeginTextCommandDisplayHelp("STRING")
-    AddTextComponentSubstringPlayerName(text)
-    EndTextCommandDisplayHelp(0, false, true, -1)
-end
+RegisterNetEvent("store-robbery:client:safeResult")
+AddEventHandler("store-robbery:client:safeResult", function(ok, storeId, message)
+    print("safe result from server", ok, storeId, message)
+
+    if ok or message == "already open" then
+        safeOpened[storeId] = true
+    end
+
+    BeginTextCommandThefeedPost("STRING")
+    if ok then
+        AddTextComponentSubstringPlayerName("Safe opened! +$" .. Config.safePayout)
+    else
+        AddTextComponentSubstringPlayerName("Safe: " .. message)
+    end
+    EndTextCommandThefeedPostTicker(false, true)
+end)
 
 CreateThread(function()
     while true do
@@ -275,6 +305,14 @@ CreateThread(function()
 
                 if distance < 10.0 then
                     sleep = 0
+                    local marker = store.safe.marker
+                    if not cashMachineRobbed[store.id] then
+                        DrawMarker(25, marker.x, marker.y, marker.z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                            1.0, 1.0, 1.0, 224, 50, 50, 150, false, false, 2, false, nil, nil, false)
+                    elseif not safeOpened[store.id] then
+                        DrawMarker(25, marker.x, marker.y, marker.z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                            1.0, 1.0, 1.0, 114, 204, 114, 150, false, false, 2, false, nil, nil, false)
+                    end
                 end
 
                 if distance < 1.5 then
