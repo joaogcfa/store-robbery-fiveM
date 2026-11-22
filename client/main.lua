@@ -1,3 +1,5 @@
+cashMachineRobbed = {}
+
 local casheer = {}
 local isRobberyStarted = {}
 local watchStarted = false
@@ -29,6 +31,8 @@ local function DoRobbery(storeId)
     TaskHandsUp(casheer[storeId] --[[ Ped ]] , Config.handsUpDuration --[[ duration ]] , -1 --[[ facingPed, none: frozen ped can't turn ]] , -1,
         false)
     TriggerServerEvent("store-robbery:server:robberyStarted", storeId)
+    cashMachineRobbed[storeId] = true
+    print("cash machine robbed, safe can be cracked for store", storeId)
 
     Wait(Config.handsUpDuration)
     ClearPedTasks(casheer[storeId])

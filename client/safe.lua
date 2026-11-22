@@ -11,6 +11,11 @@ local safeDialRotation = 0.0
 local currentDialRotationDirection = "idle"
 local lastDialRotationDirection = "idle"
 
+local safeCombination = {}
+local currentLockNum = 1
+local onTarget = false
+local initPlayerHealth = 0
+
 local function SetSafeDialRotation(value)
     safeDialRotation = value
     if safeDialRotation < 0 then
@@ -51,6 +56,39 @@ local function GetCurrentSafeDialNumber(currentDialAngle)
     return math.abs(number)
 end
 
+local function SetSafeCombination()
+    safeCombination = {}
+    for i = 1, 3 do
+        safeCombination[i] = math.random(0, 99)
+    end
+    currentLockNum = 1
+    onTarget = false
+    print("combination (remove this print later)", safeCombination[1], safeCombination[2], safeCombination[3])
+end
+
+local function RelockSafe()
+    currentLockNum = 1
+    onTarget = false
+    print("safe relocked, back to lock 1")
+end
+
+local function IsSafeUnlocked()
+    return currentLockNum > #safeCombination
+end
+
+local function ReleaseCurrentPin()
+    currentLockNum = currentLockNum + 1
+    onTarget = false
+
+    if IsSafeUnlocked() then
+        PlaySoundFrontend(-1, "TUMBLER_PIN_FALL_FINAL", "SAFE_CRACK_SOUNDSET", true)
+        print("last pin released, safe unlocked")
+    else
+        PlaySoundFrontend(-1, "TUMBLER_PIN_FALL", "SAFE_CRACK_SOUNDSET", true)
+        print("pin released, now on lock", currentLockNum)
+    end
+end
+
 local function RotateSafeDial(rotationDirection)
     local multiplier = -1
     if rotationDirection == "anticlockwise" then
@@ -62,7 +100,17 @@ local function RotateSafeDial(rotationDirection)
 
     currentDialRotationDirection = rotationDirection
     lastDialRotationDirection = rotationDirection
-    print("rotate", rotationDirection, "number", GetCurrentSafeDialNumber(safeDialRotation))
+    local number = GetCurrentSafeDialNumber(safeDialRotation)
+
+    if number == safeCombination[currentLockNum] then
+        if not onTarget then
+            onTarget = true
+            PlaySoundFrontend(-1, "TUMBLER_PIN_FALL", "SAFE_CRACK_SOUNDSET", true)
+            print("landed on target", number)
+        end
+    else
+        onTarget = false
+    end
 end
 
 local function HandleSafeDialMovement()
@@ -110,6 +158,10 @@ end
 
 local function EndMiniGame(safeUnlocked)
     print("end minigame, unlocked:", safeUnlocked)
+    if safeUnlocked then
+        PlaySoundFrontend(-1, "SAFE_DOOR_OPEN", "SAFE_CRACK_SOUNDSET", true)
+    end
+
     FreezeEntityPosition(PlayerPedId(), false)
     SetStreamedTextureDictAsNoLongerNeeded("MPSafeCracking")
     ReleaseNamedScriptAudioBank("SAFE_CRACK")
@@ -120,21 +172,43 @@ local function RunMiniGame()
     if state == "setup" then
         FreezeEntityPosition(PlayerPedId(), true)
         print("player frozen")
+        initPlayerHealth = GetEntityHealth(PlayerPedId())
         state = "cracking"
     elseif state == "cracking" then
         DisableSafeControls()
 
+        local currentHealth = GetEntityHealth(PlayerPedId())
+        if currentHealth > initPlayerHealth then
+            initPlayerHealth = currentHealth
+        end
+        if currentHealth < initPlayerHealth or IsEntityDead(PlayerPedId()) or IsPedRagdoll(PlayerPedId()) then
+            print("player died")
+            EndMiniGame(false)
+            return -1
+        end
+
         if IsDisabledControlJustPressed(0, 33) then
             print("S pressed (33), cancel")
             EndMiniGame(false)
-            return -1
+            return -2
         end
 
         HandleSafeDialMovement()
 
         if IsDisabledControlJustPressed(0, 74) then
-            print("H pressed (74), confirm on number", GetCurrentSafeDialNumber(safeDialRotation))
-            PlaySoundFrontend(-1, "TUMBLER_PIN_FALL", "SAFE_CRACK_SOUNDSET", true)
+            local number = GetCurrentSafeDialNumber(safeDialRotation)
+            print("H pressed (74), number", number, "target", safeCombination[currentLockNum])
+
+            if number == safeCombination[currentLockNum] then
+                ReleaseCurrentPin()
+                if IsSafeUnlocked() then
+                    EndMiniGame(true)
+                    return 1
+                end
+            else
+                PlaySoundFrontend(-1, "TUMBLER_RESET", "SAFE_CRACK_SOUNDSET", true)
+                RelockSafe()
+            end
         end
 
         DrawSprites()
@@ -142,10 +216,19 @@ local function RunMiniGame()
     return 0
 end
 
-RegisterCommand('crack', function()
-    print("crack command")
+local isCracking = false
+local safeOpened = {}
+
+local function CrackSafe(storeId)
+    if isCracking then
+        return 0
+    end
+    isCracking = true
+    print("start cracking storeId", storeId)
+
     LoadResources()
     SetSafeDialStartNumber()
+    SetSafeCombination()
 
     local result = 0
     while result == 0 do
@@ -153,4 +236,63 @@ RegisterCommand('crack', function()
         result = RunMiniGame()
     end
     print("minigame result", result)
+
+    if result == 1 then
+        safeOpened[storeId] = true
+        print("safe opened storeId", storeId)
+    end
+
+    isCracking = false
+    return result
+end
+
+RegisterCommand('crack', function()
+    CrackSafe(0)
 end, false)
+
+AddEventHandler("onResourceStop", function(resourceName)
+    if resourceName == GetCurrentResourceName() and isCracking then
+        print("resource stopped while cracking, unfreezing")
+        FreezeEntityPosition(PlayerPedId(), false)
+    end
+end)
+
+local function ShowHelp(text)
+    BeginTextCommandDisplayHelp("STRING")
+    AddTextComponentSubstringPlayerName(text)
+    EndTextCommandDisplayHelp(0, false, true, -1)
+end
+
+CreateThread(function()
+    while true do
+        local sleep = 1000
+        local playerCoords = GetEntityCoords(PlayerPedId())
+
+        for i = 1, #Config.stores do
+            local store = Config.stores[i]
+            if store.safe and not isCracking then
+                local distance = #(playerCoords - vector3(store.safe.x, store.safe.y, store.safe.z))
+
+                if distance < 10.0 then
+                    sleep = 0
+                end
+
+                if distance < 1.5 then
+                    if not cashMachineRobbed[store.id] then
+                        ShowHelp("Rob the cash machine first")
+                    elseif safeOpened[store.id] then
+                        ShowHelp("This safe is already open")
+                    else
+                        ShowHelp("Press ~INPUT_PICKUP~ to crack the safe")
+                        if IsControlJustPressed(0, 38) then
+                            print("E pressed at safe", store.id)
+                            CrackSafe(store.id)
+                        end
+                    end
+                end
+            end
+        end
+
+        Wait(sleep)
+    end
+end)
