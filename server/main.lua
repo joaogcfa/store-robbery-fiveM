@@ -26,18 +26,44 @@ local function takeMoney(src, amount)
     return false
 end
 
+local function findStore(storeId)
+    for i = 1, #Config.stores do
+        if Config.stores[i].id == storeId then
+            return Config.stores[i]
+        end
+    end
+    return nil
+end
+
 RegisterNetEvent("store-robbery:server:robberyStarted")
-AddEventHandler("store-robbery:server:robberyStarted", function()
+AddEventHandler("store-robbery:server:robberyStarted", function(storeId)
     local src = source
     local now = GetGameTimer()
+    print("robbery event from", src, "store", storeId)
 
-    if lastRobbery[src] and now - lastRobbery[src] < Config.robberyCooldown then
-        print("robbery refused, still on cooldown", src)
+    local store = findStore(storeId)
+    if store == nil then
+        print("robbery refused, bad store id", src, storeId)
+        return
+    end
+
+    local playerCoords = GetEntityCoords(GetPlayerPed(src))
+    local distance = #(playerCoords - vector3(store.x, store.y, store.z))
+    print("player coords", playerCoords, "distance to store", distance)
+    if distance > 10.0 then
+        print("robbery refused, too far from store", src, storeId)
+        return
+    end
+
+    local key = src .. "_" .. storeId
+
+    if lastRobbery[key] and now - lastRobbery[key] < Config.robberyCooldown then
+        print("robbery refused, still on cooldown", key)
         return
     end
 
     addMoney(src, Config.robberyPayout)
-    lastRobbery[src] = now
+    lastRobbery[key] = now
     TriggerClientEvent("store-robbery:client:balance", src, getBalance(src))
     print("new balance", src, getBalance(src))
 end)

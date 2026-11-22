@@ -1,5 +1,5 @@
-local casheer
-local isRobberyStarted = false
+local casheer = {}
+local isRobberyStarted = {}
 local watchStarted = false
 local currentBalance = 0
 local balanceLoaded = false
@@ -22,19 +22,20 @@ local function UpdateBalance(balance)
     balanceLoaded = true
 end
 
-local function DoRobbery()
-    isRobberyStarted = true
-    print("player is aiming at casheer, robbery started")
+local function DoRobbery(storeId)
+    isRobberyStarted[storeId] = true
+    print("player is aiming at casheer, robbery started", storeId)
 
-    TaskHandsUp(casheer --[[ Ped ]] , Config.handsUpDuration --[[ duration ]] , -1 --[[ facingPed, none: frozen ped can't turn ]] , -1,
+    TaskHandsUp(casheer[storeId] --[[ Ped ]] , Config.handsUpDuration --[[ duration ]] , -1 --[[ facingPed, none: frozen ped can't turn ]] , -1,
         false)
-    TriggerServerEvent("store-robbery:server:robberyStarted")
+    TriggerServerEvent("store-robbery:server:robberyStarted", storeId)
 
     Wait(Config.handsUpDuration)
-    ClearPedTasks(casheer)
+    ClearPedTasks(casheer[storeId])
 
     Wait(Config.robberyCooldown)
-    isRobberyStarted = false
+    isRobberyStarted[storeId] = false
+    print("cooldown over", storeId)
 end
 
 local function StartRobberyWatch()
@@ -44,32 +45,65 @@ local function StartRobberyWatch()
     CreateThread(function()
         while true do
             Wait(500)
-            if not isRobberyStarted and DoesEntityExist(casheer) then
-                if IsPedArmed(PlayerPedId() --[[ Ped ]] , 4 --[[ integer ]] ) and
-                    IsPlayerFreeAimingAtEntity(PlayerId() --[[ Player ]] , casheer --[[ Entity ]] ) then
-                    DoRobbery()
+            for i = 1, #Config.stores do
+                local id = Config.stores[i].id
+                if not isRobberyStarted[id] and DoesEntityExist(casheer[id]) then
+                    if IsPedArmed(PlayerPedId() --[[ Ped ]] , 4 --[[ integer ]] ) and
+                        IsPlayerFreeAimingAtEntity(PlayerId() --[[ Player ]] , casheer[id] --[[ Entity ]] ) then
+                        print("aiming at casheer", id)
+                        isRobberyStarted[id] = true
+                        CreateThread(function()
+                            DoRobbery(id)
+                        end)
+                    end
                 end
             end
         end
     end)
 end
 
-RegisterCommand('spawncasheer', function()
-    local modelHash = GetHashKey(store_data.model)
+local function spawnCasheer(store)
+    if casheer[store.id] and DoesEntityExist(casheer[store.id]) then
+        print("deleting old casheer", store.id)
+        DeleteEntity(casheer[store.id])
+    end
+
+    local modelHash = GetHashKey(store.model)
     RequestModel(modelHash)
     while not HasModelLoaded(modelHash) do
         Wait(0)
     end
+    print("model loaded", store.id, store.model)
 
-    casheer = CreatePed(1, modelHash --[[ Hash ]] , store_data.x --[[ number ]] , store_data.y --[[ number ]] ,
-        store_data.z --[[ number ]] , store_data.r --[[ number ]] , false --[[ boolean ]] , false --[[ boolean ]] )
+    local ped = CreatePed(1, modelHash --[[ Hash ]] , store.x --[[ number ]] , store.y --[[ number ]] ,
+        store.z --[[ number ]] , store.r --[[ number ]] , false --[[ boolean ]] , false --[[ boolean ]] )
 
     SetModelAsNoLongerNeeded(modelHash)
-    SetEntityInvincible(casheer --[[ Entity ]] , true --[[ boolean ]] )
-    SetBlockingOfNonTemporaryEvents(casheer --[[ Ped ]] , true --[[ boolean ]] )
-    SetEntityAsMissionEntity(casheer --[[ Entity ]] , true --[[ boolean ]] , true --[[ boolean ]] )
+    SetEntityInvincible(ped --[[ Entity ]] , true --[[ boolean ]] )
+    SetBlockingOfNonTemporaryEvents(ped --[[ Ped ]] , true --[[ boolean ]] )
+    SetEntityAsMissionEntity(ped --[[ Entity ]] , true --[[ boolean ]] , true --[[ boolean ]] )
+
+    print("casheer spawned", store.id, store.name)
+    return ped
+end
+
+local function spawnAllCasheers()
+    for i = 1, #Config.stores do
+        casheer[Config.stores[i].id] = spawnCasheer(Config.stores[i])
+    end
 
     StartRobberyWatch()
+end
+
+CreateThread(function()
+    while not NetworkIsSessionStarted() do
+        Wait(250)
+    end
+    spawnAllCasheers()
+end)
+
+RegisterCommand('spawncasheer', function()
+    spawnAllCasheers()
 end, false)
 
 RegisterCommand('balance', function()
@@ -82,8 +116,10 @@ RegisterCommand('buy', function(source, args)
     TriggerServerEvent("store-robbery:server:buyItem", item)
 end, false)
 
-RegisterCommand('startRobbery', function()
-    TriggerServerEvent("store-robbery:server:robberyStarted")
+RegisterCommand('startRobbery', function(source, args)
+    local storeId = tonumber(args[1])
+    print("test robbery for store", storeId)
+    TriggerServerEvent("store-robbery:server:robberyStarted", storeId)
 end, false)
 
 RegisterNetEvent("store-robbery:client:balance")
