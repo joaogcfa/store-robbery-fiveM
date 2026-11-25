@@ -34,43 +34,43 @@ Config = {
 
 --Car Breakdown (Veer)
 Config.breakdown = {
-    debug = true,               
+    debug = false,               
 
     -- Trigger
-    chance = 65,                
+    chance = 65,                 
     breakDistanceMin = 150.0,   
     breakDistanceMax = 400.0,
 
     -- Breakdown
-    sputterCount = 4,           
+    sputterCount = 4,            
 
     -- Limp mode
-    limpSpeedMph = 25.0,        
+    limpSpeedMph = 25.0,         
+    limpPowerMultiplier = 0.5,   
     limpEngineHealth = 120.0,   
-    stallIntervalMin = 20,      
+    stallIntervalMin = 20,       
     stallIntervalMax = 30,
-    restartHoldTime = 2.0,      
-     limpPowerMultiplier = 0.5,  -- engine power while limping (1.0 = normal, 0.5 = half): slow to accelerate
+    restartHoldTime = 2.0,       
+    restartControl = 73,         
+    restartControlName = 'INPUT_VEH_DUCK',  
 
     -- Extra engine smoke
     smokeAsset = 'core',
     smokeEffect = 'ent_amb_smoke_general',
-    smokeScale = 1.5,           -- bigger = more smoke
+    smokeScale = 1.5,            
 
-    -- Restart key after a stall (73 = X). The name is used to show the key icon in the help box.
-    restartControl = 73,
-    restartControlName = 'INPUT_VEH_DUCK',    
-
-    repairDistance = 1.8,                    -- how close to the bonnet the player must stand (metres)
-    skillHits = 3,                           -- hits needed to fix the engine
-    skillZoneSizes = { 0.22, 0.15, 0.09 },   -- green zone width for hit 1, 2, 3 (fraction of the bar)
-    skillSpeed = 1.1,                        -- marker speed (bar widths per second)
-    skillSpeedUp = 0.25,                     -- marker gets this much faster after each hit
-    failCooldown = 3.0,                      -- seconds before trying again after a miss
+    -- Repair (skill check at the bonnet)
+    repairDistance = 1.8,                    
+    skillHits = 3,                           
+    skillZoneSizes = { 0.22, 0.15, 0.09 },   
+    skillSpeed = 1.1,                        
+    skillSpeedUp = 0.25,                    
+    failCooldown = 3.0,                     
 
     -- After the repair
-    wantedLevel = 5,  
-    
-    ditchDistance = 50.0,       -- walk further than this from the getaway car and you lose the cash
-    ditchWarnDistance = 30.0,
+    wantedLevel = 5,                         
+
+    -- No switching cars 
+    ditchDistance = 50.0,                    
+    ditchWarnDistance = 30.0,                
 }

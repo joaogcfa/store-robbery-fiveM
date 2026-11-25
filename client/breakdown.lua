@@ -7,27 +7,59 @@
 --   repairing -> skill check in progress
 --   escaping  -> repaired, player has wanted stars; ends when the stars are gone
 
+
+local DEFAULTS = {
+    debug = false,
+
+    chance = 65, breakDistanceMin = 150.0, breakDistanceMax = 400.0,
+    sputterCount = 4,
+
+    limpSpeedMph = 25.0, limpEngineHealth = 120.0, limpPowerMultiplier = 0.5,
+    stallIntervalMin = 20, stallIntervalMax = 30, restartHoldTime = 2.0,
+    restartControl = 73, restartControlName = 'INPUT_VEH_DUCK',
+
+    smokeAsset = 'core', smokeEffect = 'ent_amb_smoke_general', smokeScale = 1.5,
+
+    repairDistance = 1.8, skillHits = 3, skillZoneSizes = { 0.22, 0.15, 0.09 },
+    skillSpeed = 1.1, skillSpeedUp = 0.25, failCooldown = 3.0,
+
+    wantedLevel = 5,
+
+    ditchDistance = 50.0, ditchWarnDistance = 30.0,
+}
+
+Config.breakdown = Config.breakdown or {}
 local BD = Config.breakdown   
+
+for key, value in pairs(DEFAULTS) do
+    if BD[key] == nil then
+        BD[key] = value
+        print(('^3[breakdown] Config.breakdown.%s is missing from config.lua, using default: %s^7')
+            :format(key, tostring(value)))
+    end
+end
 
 
 math.randomseed(GetGameTimer())
 
-local MPH_TO_MS = 0.44704     -- 1 mph in metres per second
+local MPH_TO_MS = 0.44704     
+
+
+-- State
 
 
 local state = 'idle'
-local getaway = nil       -- the getaway vehicle
-local traveled = 0.0      -- metres driven in the getaway car so far
-local breakAt = 0.0       -- metres at which it breaks down
-local lastPos = nil       -- getaway car position last check (for measuring distance)
+local getaway = nil      
+local traveled = 0.0      
+local breakAt = 0.0       
+local lastPos = nil       
 
-local stalled = false     -- limp mode: is the engine currently cut out?
-local stallTimer = 0.0    -- limp mode: seconds of driving left until the next stall
-local restartHeld = 0.0   -- limp mode: how long the player has held the restart key while stalled
-local smokeFx = nil       -- handle of the extra smoke particle effect on the engine
-local repairCooldownUntil = 0   -- game time (ms) before which a new repair can't start (after a miss)
-local ditchWarned = false       -- already warned the player they're walking too far from the car?
-
+local stalled = false     
+local stallTimer = 0.0    
+local restartHeld = 0.0   
+local smokeFx = nil       
+local repairCooldownUntil = 0   
+local ditchWarned = false       
 
 local function debugPrint(msg)
     if BD.debug then
@@ -66,8 +98,7 @@ local function isLandVehicle(veh)
         or IsThisModelABoat(model) or IsThisModelABicycle(model))
 end
 
--- Extra, thicker smoke pouring out of the engine (on top of GTA's own damage smoke).
--- Note: particle effects are only drawn for this player; other players still see GTA's normal smoke.
+
 local function startSmoke(veh)
     if smokeFx then return end
 
@@ -115,6 +146,8 @@ local function resetBreakdown(reason)
     ditchWarned = false
 end
 
+
+
 local function checkForGetawayCar()
     local ped = PlayerPedId()
     local veh = GetVehiclePedIsIn(ped, false)   -- 0 if on foot
@@ -142,7 +175,7 @@ end
 
 
 
-local startBreakdown   
+local startBreakdown   -- defined below, declared here so trackDistance can call it
 
 local function trackDistance()
     local pos = GetEntityCoords(getaway)
@@ -160,9 +193,9 @@ end
 
 
 local function enterLimpMode(veh)
-    SetVehicleEngineHealth(veh, BD.limpEngineHealth)        -- lower = thicker smoke (below 0 = fire)
-    SetEntityMaxSpeed(veh, BD.limpSpeedMph * MPH_TO_MS)     -- cap top speed
-    CreateThread(function() startSmoke(veh) end)            -- loading the effect can take a few frames
+    SetVehicleEngineHealth(veh, BD.limpEngineHealth)      
+    SetEntityMaxSpeed(veh, BD.limpSpeedMph * MPH_TO_MS)     
+    CreateThread(function() startSmoke(veh) end)            
 
     stalled = false
     restartHeld = 0.0
@@ -204,6 +237,7 @@ startBreakdown = function()
         end
     end)
 end
+
 
 
 local CONTROL_E = 38          -- INPUT_CONTEXT (E)
@@ -402,7 +436,8 @@ local function updateLimp()
         SetVehicleEngineHealth(veh, 50.0)
     end
 
-   
+    -- Keep it slow: re-apply the speed cap and weaker engine every frame
+    -- (power multipliers only last one frame, and GTA can reset the cap)
     SetEntityMaxSpeed(veh, BD.limpSpeedMph * MPH_TO_MS)
     SetVehicleCheatPowerIncrease(veh, BD.limpPowerMultiplier)
 
@@ -462,7 +497,7 @@ local function updateLimp()
 end
 
 
-
+-- States in which the player is committed to the getaway car
 local RULE_STATES = { driving = true, breaking = true, limp = true, repairing = true, escaping = true }
 
 local function ditch(reason)
@@ -550,6 +585,7 @@ CreateThread(function()
 end)
 
 
+
 AddEventHandler('store-robbery:client:robberyFinished', function()
     if state ~= 'idle' then
         debugPrint('Robbery finished, but a breakdown is already in progress: ignoring')
@@ -560,6 +596,8 @@ AddEventHandler('store-robbery:client:robberyFinished', function()
     debugPrint('Robbery finished: armed, waiting for a getaway car')
     notify('~r~Robbery complete!~s~ Get to a car and get out of here.')
 end)
+
+
 
 -- bd_test: pretend a robbery just finished
 RegisterCommand('bd_test', function()
