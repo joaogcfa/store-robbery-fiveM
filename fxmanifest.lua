@@ -3,4 +3,5 @@ game 'gta5'
 
 shared_script 'config.lua'
 client_script 'client/main.lua'
+client_script 'client/safe.lua'
 server_script 'server/main.lua'

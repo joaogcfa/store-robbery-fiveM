@@ -1,3 +1,5 @@
+cashMachineRobbed = {}
+
 local casheer = {}
 local isRobberyStarted = {}
 local watchStarted = false
@@ -26,9 +28,11 @@ local function DoRobbery(storeId)
     isRobberyStarted[storeId] = true
     print("player is aiming at casheer, robbery started", storeId)
 
-    TaskHandsUp(casheer[storeId] --[[ Ped ]] , Config.handsUpDuration --[[ duration ]] , -1 --[[ facingPed, none: frozen ped can't turn ]] , -1,
+    TaskHandsUp(casheer[storeId] --[[ Ped ]] , Config.handsUpDuration --[[ duration ]] , -1 --[[ Ped ]] , -1,
         false)
     TriggerServerEvent("store-robbery:server:robberyStarted", storeId)
+    cashMachineRobbed[storeId] = true
+    print("cash machine robbed, safe can be cracked for store", storeId)
 
     Wait(Config.handsUpDuration)
     ClearPedTasks(casheer[storeId])
