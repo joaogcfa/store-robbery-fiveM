@@ -57,3 +57,24 @@ Config = {
         burger = 400
     }
 }
+
+Config.weaponShop = {
+    position = vector3(110.0450, -1949.8994, 20.6405),
+    weapons = {
+        ["Pistol"] = {
+            weapon = "WEAPON_PISTOL",
+            price = 500,
+            ammo = 72
+        },
+        ["Micro SMG"] = {
+            weapon = "WEAPON_MICROSMG",
+            price = 1000,
+            ammo = 180
+        },
+        ["Pump Shotgun"] = {
+            weapon = "WEAPON_PUMPSHOTGUN",
+            price = 1500,
+            ammo = 48
+        }
+    }
+}
