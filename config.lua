@@ -60,11 +60,11 @@ Config = {
 
 --Car Breakdown (Veer)
 Config.breakdown = {
-    debug = false,               
+    debug = false,              
 
     -- Trigger
-    chance = 65,                 
-    breakDistanceMin = 150.0,   
+    chance = 65,                
+    breakDistanceMin = 150.0,    
     breakDistanceMax = 400.0,
 
     -- Breakdown
@@ -73,30 +73,51 @@ Config.breakdown = {
     -- Limp mode
     limpSpeedMph = 25.0,         
     limpPowerMultiplier = 0.5,   
-    limpEngineHealth = 120.0,   
+    limpEngineHealth = 120.0,    
     stallIntervalMin = 20,       
     stallIntervalMax = 30,
     restartHoldTime = 2.0,       
-    restartControl = 73,         
-    restartControlName = 'INPUT_VEH_DUCK',  
+    restartControl = 73,        
+    restartControlName = 'INPUT_VEH_DUCK',   
 
     -- Extra engine smoke
     smokeAsset = 'core',
     smokeEffect = 'ent_amb_smoke_general',
     smokeScale = 1.5,            
 
-    -- Repair (skill check at the bonnet)
-    repairDistance = 1.8,                    
-    skillHits = 3,                           
+    
+    repairDistance = 1.8,                   
+    skillHits = 3,                          
     skillZoneSizes = { 0.22, 0.15, 0.09 },   
     skillSpeed = 1.1,                        
     skillSpeedUp = 0.25,                    
-    failCooldown = 3.0,                     
+    failCooldown = 3.0,                      
+   
+    wantedLevel = 5,                        
 
-    -- After the repair
-    wantedLevel = 5,                         
+    
+    ditchDistance = 50.0,                  
+    ditchWarnDistance = 30.0,              
+}
 
-    -- No switching cars 
-    ditchDistance = 50.0,                    
-    ditchWarnDistance = 30.0,                
+-- Weapon shop (Joao)
+Config.weaponShop = {
+    position = vector3(110.0450, -1949.8994, 20.6405),
+    weapons = {
+        ["Pistol"] = {
+            weapon = "WEAPON_PISTOL",
+            price = 500,
+            ammo = 72
+        },
+        ["Micro SMG"] = {
+            weapon = "WEAPON_MICROSMG",
+            price = 1000,
+            ammo = 180
+        },
+        ["Pump Shotgun"] = {
+            weapon = "WEAPON_PUMPSHOTGUN",
+            price = 1500,
+            ammo = 48
+        }
+    }
 }

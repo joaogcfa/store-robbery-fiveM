@@ -135,6 +135,7 @@ AddEventHandler("store-robbery:server:buyItem", function(item)
     TriggerClientEvent("store-robbery:client:buyResult", src, ok, item, getBalance(src))
 end)
 
+<<<<<<< HEAD
 -- Car breakdown (Suryaveer): the player ditched their getaway car, so they lose the robbery cash
 RegisterNetEvent("store-robbery:server:loseRobberyCash")
 AddEventHandler("store-robbery:server:loseRobberyCash", function()
@@ -147,3 +148,66 @@ AddEventHandler("store-robbery:server:loseRobberyCash", function()
     TriggerClientEvent("store-robbery:client:balance", src, getBalance(src))
     print("ditched getaway car, lost cash", src, amount, getBalance(src))
 end)
+=======
+
+local lastWeaponPurchase = {}
+
+RegisterNetEvent("store-robbery:server:buyWeapon", function(name)
+    local src = source
+
+    if type(name) ~= "string" then return end
+
+    local item = Config.weaponShop.weapons[name]
+    if not item then return end
+
+    -- Limit repeated purchase requests.
+    local now = GetGameTimer()
+
+    if lastWeaponPurchase[src]
+        and now - lastWeaponPurchase[src] < 1000 then
+        return
+    end
+
+    lastWeaponPurchase[src] = now
+
+    local ped = GetPlayerPed(src)
+    if ped == 0 or not DoesEntityExist(ped) then return end
+
+    -- Validate the player's position on the server.
+    local position = GetEntityCoords(ped)
+
+    if #(position - Config.weaponShop.position) > 7.0 then
+        TriggerClientEvent(
+            "store-robbery:client:weaponPurchase",
+            src, false, name, "You are too far from the dealer."
+        )
+        return
+    end
+
+    -- Read the price from server configuration.
+    if not takeMoney(src, item.price) then
+        TriggerClientEvent(
+            "store-robbery:client:weaponPurchase",
+            src, false, name, "Not enough cash."
+        )
+        return
+    end
+
+    TriggerClientEvent(
+        "store-robbery:client:balance",
+        src, getBalance(src)
+    )
+
+    TriggerClientEvent(
+        "store-robbery:client:weaponPurchase",
+        src, true, name, "Purchased " .. name .. "."
+    )
+
+    print(("[Weapon Shop] Player %d purchased %s for $%d.")
+        :format(src, name, item.price))
+end)
+
+AddEventHandler("playerDropped", function()
+    lastWeaponPurchase[source] = nil
+end)
+>>>>>>> master
