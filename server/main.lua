@@ -67,6 +67,7 @@ AddEventHandler("store-robbery:server:robberyStarted", function(storeId)
     addMoney(src, Config.robberyPayout)
     lastRobbery[key] = now
     cashMachineRobbed[key] = true
+    TriggerClientEvent("store-robbery:client:storeRobbed", src, storeId)
     TriggerClientEvent("store-robbery:client:balance", src, getBalance(src))
     print("new balance", src, getBalance(src))
 end)
@@ -195,4 +196,29 @@ end)
 
 AddEventHandler("playerDropped", function()
     lastWeaponPurchase[source] = nil
+end)
+
+local missionStarted = {}
+
+RegisterNetEvent("store-robbery:server:startMission")
+AddEventHandler("store-robbery:server:startMission", function()
+    local src = source
+    print("start mission event from", src)
+
+    if missionStarted[src] then
+        print("mission already started", src)
+        TriggerClientEvent("store-robbery:client:missionResult", src, "already started")
+        return
+    end
+
+    addMoney(src, Config.mission.startMoney)
+    missionStarted[src] = true
+    TriggerClientEvent("store-robbery:client:balance", src, getBalance(src))
+    TriggerClientEvent("store-robbery:client:missionResult", src, "started")
+    print("mission started", src, "new balance", getBalance(src))
+end)
+
+AddEventHandler("playerDropped", function()
+    missionStarted[source] = nil
+    print("player dropped, mission cleared", source)
 end)
