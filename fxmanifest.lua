@@ -8,6 +8,7 @@ client_scripts {
     'client/breakdown.lua',
     'client/weapon_shop.lua',
     'client/safe.lua',
+    'client/mission.lua'
 }
 
 server_script 'server/main.lua'

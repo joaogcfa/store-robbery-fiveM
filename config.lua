@@ -121,3 +121,17 @@ Config.weaponShop = {
         }
     }
 }
+
+Config.mission = {
+    startMoney = 500,
+    senderName = "Ghayoor Habibi",
+    subject = "24/7 Rival",
+    picture = "CHAR_BLOCKED",
+    messages = {
+        "My shop is empty and that 24/7 keeps growing. ENOUGH! I have a job for you: rob them.",
+        "Here's cash for a gun. Buy it at the gun van, it's on your map. Then go steal your first store.",
+        "3 stores in total. The last 2 have safes, so extra cash for you. Don't embarrass me!"
+    },
+    firstStoreId = 1,
+    wantedLevel = 2
+}

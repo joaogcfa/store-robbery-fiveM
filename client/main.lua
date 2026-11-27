@@ -30,6 +30,9 @@ local function DoRobbery(storeId)
 
     TaskHandsUp(casheer[storeId] --[[ Ped ]] , Config.handsUpDuration --[[ duration ]] , -1 --[[ Ped ]] , -1,
         false)
+    SetPlayerWantedLevel(PlayerId(), Config.mission.wantedLevel, false)
+    SetPlayerWantedLevelNow(PlayerId(), false)
+    print("wanted level set", Config.mission.wantedLevel)
     TriggerServerEvent("store-robbery:server:robberyStarted", storeId)
     cashMachineRobbed[storeId] = true
     print("cash machine robbed, safe can be cracked for store", storeId)
