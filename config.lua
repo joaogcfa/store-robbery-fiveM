@@ -58,6 +58,49 @@ Config = {
     }
 }
 
+--Car Breakdown (Veer)
+Config.breakdown = {
+    debug = false,              
+
+    -- Trigger
+    chance = 65,                
+    breakDistanceMin = 150.0,    
+    breakDistanceMax = 400.0,
+
+    -- Breakdown
+    sputterCount = 4,            
+
+    -- Limp mode
+    limpSpeedMph = 25.0,         
+    limpPowerMultiplier = 0.5,   
+    limpEngineHealth = 120.0,    
+    stallIntervalMin = 20,       
+    stallIntervalMax = 30,
+    restartHoldTime = 2.0,       
+    restartControl = 73,        
+    restartControlName = 'INPUT_VEH_DUCK',   
+
+    -- Extra engine smoke
+    smokeAsset = 'core',
+    smokeEffect = 'ent_amb_smoke_general',
+    smokeScale = 1.5,            
+
+    
+    repairDistance = 1.8,                   
+    skillHits = 3,                          
+    skillZoneSizes = { 0.22, 0.15, 0.09 },   
+    skillSpeed = 1.1,                        
+    skillSpeedUp = 0.25,                    
+    failCooldown = 3.0,                      
+   
+    wantedLevel = 5,                        
+
+    
+    ditchDistance = 50.0,                  
+    ditchWarnDistance = 30.0,              
+}
+
+-- Weapon shop (Joao)
 Config.weaponShop = {
     position = vector3(110.0450, -1949.8994, 20.6405),
     weapons = {

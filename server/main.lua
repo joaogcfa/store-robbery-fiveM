@@ -135,6 +135,20 @@ AddEventHandler("store-robbery:server:buyItem", function(item)
     TriggerClientEvent("store-robbery:client:buyResult", src, ok, item, getBalance(src))
 end)
 
+<<<<<<< HEAD
+-- Car breakdown (Suryaveer): the player ditched their getaway car, so they lose the robbery cash
+RegisterNetEvent("store-robbery:server:loseRobberyCash")
+AddEventHandler("store-robbery:server:loseRobberyCash", function()
+    local src = source
+    -- Take back up to one robbery's payout (less if they've already spent some)
+    local amount = math.min(Config.robberyPayout, getBalance(src))
+    if amount > 0 then
+        takeMoney(src, amount)
+    end
+    TriggerClientEvent("store-robbery:client:balance", src, getBalance(src))
+    print("ditched getaway car, lost cash", src, amount, getBalance(src))
+end)
+=======
 
 local lastWeaponPurchase = {}
 
@@ -196,3 +210,4 @@ end)
 AddEventHandler("playerDropped", function()
     lastWeaponPurchase[source] = nil
 end)
+>>>>>>> master
