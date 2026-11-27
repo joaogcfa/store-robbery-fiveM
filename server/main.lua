@@ -136,7 +136,6 @@ AddEventHandler("store-robbery:server:buyItem", function(item)
     TriggerClientEvent("store-robbery:client:buyResult", src, ok, item, getBalance(src))
 end)
 
-<<<<<<< HEAD
 -- Car breakdown (Suryaveer): the player ditched their getaway car, so they lose the robbery cash
 RegisterNetEvent("store-robbery:server:loseRobberyCash")
 AddEventHandler("store-robbery:server:loseRobberyCash", function()
@@ -149,7 +148,6 @@ AddEventHandler("store-robbery:server:loseRobberyCash", function()
     TriggerClientEvent("store-robbery:client:balance", src, getBalance(src))
     print("ditched getaway car, lost cash", src, amount, getBalance(src))
 end)
-=======
 
 local lastWeaponPurchase = {}
 
