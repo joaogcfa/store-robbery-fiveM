@@ -3,9 +3,12 @@ game 'gta5'
 
 shared_script 'config.lua'
 
-client_script 'client/main.lua'
-client_script 'client/weapon_shop.lua'
-client_script 'client/safe.lua'
-client_script 'client/mission.lua'
+client_scripts {
+    'client/main.lua',
+    'client/breakdown.lua',
+    'client/weapon_shop.lua',
+    'client/safe.lua',
+    'client/mission.lua'
+}
 
 server_script 'server/main.lua'
