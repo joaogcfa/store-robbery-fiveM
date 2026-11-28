@@ -143,10 +143,10 @@ Config.weaponShop = {
 Config.mission = {
     startMoney = 500,
     senderName = "Ghayoor Habibi",
-    subject = "24/7 Rival",
+    subject = "Rival stores",
     picture = "CHAR_BLOCKED",
     messages = {
-        "My shop is empty and that 24/7 keeps growing. ENOUGH! I have a job for you: rob them.",
+        "My shop is empty and that rival of mine keeps growing. ENOUGH! I have a job for you: rob them.",
         "Here's cash for a gun. Buy it at the gun van, it's on your map. Then go steal your first store.",
         "I also saved the getaway car for you. It's parked close to the gun shop. Don't get caught.",
         "3 stores in total. The last 2 have safes, so extra cash for you. Don't embarrass me!"

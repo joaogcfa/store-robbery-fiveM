@@ -30,7 +30,7 @@ You can only start it once per session. Typing it again tells you that you alrea
 
 ## How to play
 
-1. **Mission texts.** Ghayoor sends you three texts and $500. Your weapons are removed, so you have to buy one.
+1. **Mission texts.** Ghayoor sends you four texts and $500. Your weapons are removed, so you have to buy one.
 2. **Gun van.** Go to the red **Gun Van** blip. Stand behind the van, look at a weapon on display and press **E** to buy it. The pistol costs exactly $500.
 3. **Rob the store.** Go to the yellow **Rival Store** blip. Aim your gun at the clerk. He puts his hands up, you get $500 and 2 wanted stars.
 4. **Safes (stores 2 and 3).** In the back room, a green circle shows the safe once you've robbed the till (red means rob the till first). Press **E** to start cracking.
