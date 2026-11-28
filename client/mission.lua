@@ -5,6 +5,9 @@ local storeBlip = nil
 local targetStoreId = nil
 local gunBought = false
 local objective = nil
+local waitingEscape = false
+local robbedStoreId = nil
+local respawnStoreId = nil
 
 local function SetObjective(text)
     objective = text
@@ -53,7 +56,7 @@ local function AddStoreBlip(store)
     SetBlipSprite(storeBlip, 52)
     SetBlipColour(storeBlip, 5)
     BeginTextCommandSetBlipName("STRING")
-    AddTextComponentSubstringPlayerName(store.name)
+    AddTextComponentSubstringPlayerName("Rival Store")
     EndTextCommandSetBlipName(storeBlip)
     print("store blip added", storeBlip, store.name)
 end
@@ -83,6 +86,14 @@ RegisterCommand('startmission', function()
 end, false)
 
 AddEventHandler("playerSpawned", function()
+    if respawnStoreId then
+        local store = FindMissionStore(respawnStoreId)
+        respawnStoreId = nil
+        SetEntityCoords(PlayerPedId(), store.respawn.x, store.respawn.y, store.respawn.z, false, false, false, false)
+        SetEntityHeading(PlayerPedId(), store.respawn.r)
+        print("respawned outside store", store.id)
+    end
+
     if missionStarted then
         print("player spawned, mission already started")
         return
@@ -118,36 +129,77 @@ RegisterNetEvent("store-robbery:client:weaponPurchase")
 AddEventHandler("store-robbery:client:weaponPurchase", function(ok, name, message)
     if ok and targetStoreId == Config.mission.firstStoreId and not gunBought then
         gunBought = true
-        local store = FindMissionStore(targetStoreId)
-        SetObjective("Go steal your first store: ~y~" .. store.name .. "~s~")
+        SetObjective("Go rob the ~y~rival store~s~")
     end
 end)
 
 RegisterNetEvent("store-robbery:client:storeRobbed")
 AddEventHandler("store-robbery:client:storeRobbed", function(storeId)
     print("store robbed", storeId, "current target", targetStoreId)
-    if storeId ~= targetStoreId then
+    if storeId ~= targetStoreId or waitingEscape then
         return
     end
 
-    local nextStore = FindMissionStore(targetStoreId + 1)
+    waitingEscape = true
+    robbedStoreId = storeId
+    targetStoreId = nil
+    if storeBlip then
+        RemoveBlip(storeBlip)
+        storeBlip = nil
+    end
+
+    if FindMissionStore(storeId).safe then
+        SetObjective("~y~Crack the safe in the back of the store ~s~ or ~r~lose the cops~s~")
+    else
+        SetObjective("~r~Lose the cops~s~")
+    end
+end)
+
+RegisterNetEvent("store-robbery:client:escapeFailed")
+AddEventHandler("store-robbery:client:escapeFailed", function(failedStoreId, lostMoney, storeIds)
+    print("escape failed, back to store", failedStoreId, "lost", lostMoney)
+    respawnStoreId = failedStoreId
+
+    BeginTextCommandThefeedPost("STRING")
+    AddTextComponentSubstringPlayerName("~r~You died while escaping.~s~ You lost $" .. lostMoney .. ".")
+    EndTextCommandThefeedPostTicker(false, true)
+
+    if waitingEscape then
+        waitingEscape = false
+        targetStoreId = robbedStoreId
+        AddStoreBlip(FindMissionStore(targetStoreId))
+        SetObjective("Go back to the ~y~rival store~s~")
+    end
+end)
+
+RegisterNetEvent("store-robbery:client:escaped")
+AddEventHandler("store-robbery:client:escaped", function(money)
+    print("escaped, money is safe", money, "waiting escape", waitingEscape)
+    BeginTextCommandThefeedPost("STRING")
+    AddTextComponentSubstringPlayerName("~g~You got away!~s~ The $" .. money .. " is yours.")
+    EndTextCommandThefeedPostTicker(false, true)
+
+    if not waitingEscape then
+        return
+    end
+    waitingEscape = false
+
+    local nextStore = FindMissionStore(robbedStoreId + 1)
 
     if nextStore then
         targetStoreId = nextStore.id
         AddStoreBlip(nextStore)
         if FindMissionStore(targetStoreId + 1) then
-            SetObjective("Go rob the next store: ~y~" .. nextStore.name .. "~s~")
+            SetObjective("Go rob the next ~y~rival store~s~")
         else
-            SetObjective("Go rob the last store: ~y~" .. nextStore.name .. "~s~")
+            SetObjective("Go rob the last ~y~rival store~s~")
         end
     else
         targetStoreId = nil
-        RemoveBlip(storeBlip)
-        storeBlip = nil
         SetObjective("Job done")
         CreateThread(function()
             Wait(8000)
-            if targetStoreId == nil then
+            if targetStoreId == nil and not waitingEscape then
                 objective = nil
             end
         end)

@@ -7,7 +7,13 @@ Config = {
             x = -705.4786,
             y = -913.8461,
             z = 18.2156,
-            r = 75.8789
+            r = 75.8789,
+            respawn = {
+                x = -767.5980,
+                y = -944.9216,
+                z = 17.1660,
+                r = 256.0790
+            }
         },
         {
             id = 2,
@@ -17,6 +23,12 @@ Config = {
             y = -982.3583,
             z = 46.4158,
             r = 268.9130,
+            respawn = {
+                x = 1093.0906,
+                y = -950.8244,
+                z = 46.6770,
+                r = 240.8701
+            },
             safe = {
                 x = 1126.85,
                 y = -980.19,
@@ -36,6 +48,12 @@ Config = {
             y = 326.4533,
             z = 103.5664,
             r = 258.8167,
+            respawn = {
+                x = 388.3150,
+                y = 286.7844,
+                z = 103.0098,
+                r = 256.0790
+            },
             safe = {
                 x = 378.07,
                 y = 333.31,
@@ -64,8 +82,8 @@ Config.breakdown = {
 
     -- Trigger
     chance = 65,                
-    breakDistanceMin = 150.0,    
-    breakDistanceMax = 400.0,
+    breakDistanceMin = 350.0,    
+    breakDistanceMax = 600.0,
 
     -- Breakdown
     sputterCount = 4,            
@@ -90,10 +108,10 @@ Config.breakdown = {
     skillHits = 3,                          
     skillZoneSizes = { 0.22, 0.15, 0.09 },   
     skillSpeed = 1.1,                        
-    skillSpeedUp = 0.25,                    
+    skillSpeedUp = 0.05,                    
     failCooldown = 3.0,                      
    
-    wantedLevel = 5,                        
+    wantedLevel = 4,                        
 
     
     ditchDistance = 50.0,                  
@@ -130,6 +148,7 @@ Config.mission = {
     messages = {
         "My shop is empty and that 24/7 keeps growing. ENOUGH! I have a job for you: rob them.",
         "Here's cash for a gun. Buy it at the gun van, it's on your map. Then go steal your first store.",
+        "I also saved the getaway car for you. It's parked close to the gun shop. Don't get caught.",
         "3 stores in total. The last 2 have safes, so extra cash for you. Don't embarrass me!"
     },
     firstStoreId = 1,

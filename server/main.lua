@@ -37,6 +37,21 @@ local function findStore(storeId)
     return nil
 end
 
+local riskMoney = {}
+local riskStores = {}
+local riskSince = {}
+
+local function addRisk(src, storeId, amount)
+    if riskMoney[src] == nil then
+        riskMoney[src] = 0
+        riskStores[src] = {}
+    end
+    riskMoney[src] = riskMoney[src] + amount
+    table.insert(riskStores[src], storeId)
+    riskSince[src] = GetGameTimer()
+    print("money at risk", src, riskMoney[src], "stores", #riskStores[src])
+end
+
 RegisterNetEvent("store-robbery:server:robberyStarted")
 AddEventHandler("store-robbery:server:robberyStarted", function(storeId)
     local src = source
@@ -67,6 +82,7 @@ AddEventHandler("store-robbery:server:robberyStarted", function(storeId)
     addMoney(src, Config.robberyPayout)
     lastRobbery[key] = now
     cashMachineRobbed[key] = true
+    addRisk(src, storeId, Config.robberyPayout)
     TriggerClientEvent("store-robbery:client:storeRobbed", src, storeId)
     TriggerClientEvent("store-robbery:client:balance", src, getBalance(src))
     print("new balance", src, getBalance(src))
@@ -108,6 +124,7 @@ AddEventHandler("store-robbery:server:safeCracked", function(storeId)
 
     addMoney(src, Config.safePayout)
     safeOpened[key] = true
+    addRisk(src, storeId, Config.safePayout)
     print("safe paid", src, storeId, "new balance", getBalance(src))
     TriggerClientEvent("store-robbery:client:balance", src, getBalance(src))
     TriggerClientEvent("store-robbery:client:safeResult", src, true, storeId, "safe opened")
@@ -232,5 +249,59 @@ end)
 
 AddEventHandler("playerDropped", function()
     missionStarted[source] = nil
+    riskMoney[source] = nil
+    riskStores[source] = nil
+    riskSince[source] = nil
     print("player dropped, mission cleared", source)
+end)
+
+local function escapeFailed(src)
+    local lost = math.min(riskMoney[src], getBalance(src))
+    if lost > 0 then
+        takeMoney(src, lost)
+    end
+
+    local stores = riskStores[src]
+    for i = 1, #stores do
+        local key = src .. "_" .. stores[i]
+        lastRobbery[key] = nil
+        cashMachineRobbed[key] = nil
+        safeOpened[key] = nil
+    end
+
+    print("escape failed", src, "lost", lost, "back to store", stores[1])
+    TriggerClientEvent("store-robbery:client:balance", src, getBalance(src))
+    TriggerClientEvent("store-robbery:client:escapeFailed", src, stores[1], lost, stores)
+
+    riskMoney[src] = nil
+    riskStores[src] = nil
+    riskSince[src] = nil
+end
+
+local function escapeDone(src)
+    print("escape done", src, "money is safe", riskMoney[src])
+    TriggerClientEvent("store-robbery:client:escaped", src, riskMoney[src])
+    riskMoney[src] = nil
+    riskStores[src] = nil
+    riskSince[src] = nil
+end
+
+CreateThread(function()
+    while true do
+        Wait(500)
+        for src, money in pairs(riskMoney) do
+            local ped = GetPlayerPed(src)
+            if ped ~= 0 then
+                local health = GetEntityHealth(ped)
+                local wanted = GetPlayerWantedLevel(src)
+
+                if health <= 100 then
+                    print("player dead while money at risk", src, "health", health, "wanted", wanted)
+                    escapeFailed(src)
+                elseif wanted == 0 and GetGameTimer() - riskSince[src] > 10000 then
+                    escapeDone(src)
+                end
+            end
+        end
+    end
 end)

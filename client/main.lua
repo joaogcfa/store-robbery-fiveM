@@ -136,6 +136,15 @@ AddEventHandler("store-robbery:client:balance", function(balance)
     print("my balance:", balance)
 end)
 
+RegisterNetEvent("store-robbery:client:escapeFailed")
+AddEventHandler("store-robbery:client:escapeFailed", function(failedStoreId, lostMoney, storeIds)
+    for i = 1, #storeIds do
+        cashMachineRobbed[storeIds[i]] = nil
+        isRobberyStarted[storeIds[i]] = false
+        print("store reset after failed escape", storeIds[i])
+    end
+end)
+
 RegisterNetEvent("store-robbery:client:unknownItem")
 AddEventHandler("store-robbery:client:unknownItem", function(item)
     print("unknown item:", item)

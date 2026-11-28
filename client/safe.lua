@@ -271,6 +271,14 @@ AddEventHandler("onResourceStop", function(resourceName)
     end
 end)
 
+RegisterNetEvent("store-robbery:client:escapeFailed")
+AddEventHandler("store-robbery:client:escapeFailed", function(failedStoreId, lostMoney, storeIds)
+    for i = 1, #storeIds do
+        safeOpened[storeIds[i]] = nil
+        print("safe reset after failed escape", storeIds[i])
+    end
+end)
+
 RegisterNetEvent("store-robbery:client:safeResult")
 AddEventHandler("store-robbery:client:safeResult", function(ok, storeId, message)
     print("safe result from server", ok, storeId, message)
